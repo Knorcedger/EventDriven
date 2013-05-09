@@ -13,7 +13,9 @@ var ModelFactory = {
 							previous: undefined,
 							validation: options.schema[attribute].validation
 						};
-						// this.validate(this.schema[attribute]);
+						if (! Validator.prototype.set(this.attributes[attribute], this.attributes[attribute].value)) {
+							console.warn('Attribute was setup with invalid default value');
+						}
 					}
 				},
 			};
@@ -25,8 +27,12 @@ var ModelFactory = {
 			Validator.prototype.options = function(options) {
 				if (!options || !options.type || !options.schema) {
 					EventPublisher.publish({
-						eventName: 'ModelFactory.create.error.invalidOptions'
+						eventName: 'ModelFactory.create.error.invalidOptions',
+						data: {
+							options: options
+						}
 					});
+					return false;
 					// throw new Error("Please provide type and attributes");
 				} else {
 					return true;
@@ -36,8 +42,13 @@ var ModelFactory = {
 			Validator.prototype.set = function(attribute, value) {
 				if ((attribute.validation instanceof Function && !attribute.validation(value)) || (attribute.type && toString.call(attribute.value) !== '[object ' + attribute.type + ']')) {
 					EventPublisher.publish({
-						eventName: 'ModelFactory.set.error.invalidValue'
+						eventName: 'ModelFactory.set.error.invalidValue',
+						data: {
+							attribute: attribute,
+							value: value
+						}
 					});
+					return false;
 					// throw new Error("Invalid data. Expecting " + attribute.type);
 				} else {
 					return true;
